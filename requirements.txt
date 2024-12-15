@@ -1,3 +1,4 @@
 Flask
 markitdown
 openai
+python-docx
