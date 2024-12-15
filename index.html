@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="A mobile simulator designed to demonstrate mobile interface design.">
+  <meta name="keywords" content="mobile, simulator, mobile design, mobile app">
+  <meta name="author" content="Your Name or Company">
+  <meta http-equiv="Content-Language" content="en">
+
+  <!-- Canonical Link -->
+  <link rel="canonical" href="https://www.yourwebsite.com/pc-simulator" />
+
+  <!-- Open Graph for Social Media -->
+  <meta property="og:title" content="PC Simulator">
+  <meta property="og:description" content="A mobile simulator designed to demonstrate mobile interface design.">
+  <meta property="og:image" content="https://www.yourwebsite.com/pc-simulator-image.jpg">
+  <meta property="og:url" content="https://www.yourwebsite.com/pc-simulator">
+  <meta property="og:type" content="website">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PC Simulator">
+  <meta name="twitter:description" content="A mobile simulator designed to demonstrate mobile interface design.">
+  <meta name="twitter:image" content="https://www.yourwebsite.com/pc-simulator-image.jpg">
+  <meta name="twitter:creator" content="@yourtwitterhandle">
+
+  <!-- Favicon -->
+  <link rel="icon" href="https://www.yourwebsite.com/favicon.ico" type="image/x-icon">
+
+  <title>PC Simulator</title>
+
+  <style>
+    /* Global Styles */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    .mobile-container {
+      width: 360px;
+      height: 640px;
+      border: 16px solid black;
+      border-radius: 16px;
+      background-color: #fff;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .content {
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    /* Form Styles */
+    form {
+      margin-top: 20px;
+      text-align: left;
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 8px;
+      width: 100%;
+    }
+
+    input[type="file"], input[type="text"], button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    /* Result Styles */
+    #conversion-result {
+      margin-top: 20px;
+      background-color: #f4f4f4;
+      padding: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      display: none;
+    }
+
+    #text-content {
+      width: 100%;
+      height: 300px;
+      font-size: 1rem;
+      padding: 10px;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+
+    /* Adjustments for PC */
+    @media (min-width: 768px) {
+      .mobile-container {
+        width: 600px;
+        height: 1000px;
+      }
+
+      .content {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="mobile-container">
+    <div class="content">
+      <p>Mobile Simulator Screen</p>
+      <p>PC Version: Adjusted for larger screens.</p>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- File Upload Form -->
+    <h2>Upload a File</h2>
+    <form id="file-form" enctype="multipart/form-data">
+      <input type="file" id="file" name="file" accept=".pdf, .docx, .pptx, .xlsx, .html, .txt, .jpg, .jpeg, .png" />
+      <button type="submit">Convert File</button>
+    </form>
+
+    <!-- URL Input Form -->
+    <h2>Or Provide a URL</h2>
+    <form id="url-form">
+      <input type="text" id="url" name="url" placeholder="Enter URL of the file" />
+      <button type="submit">Convert from URL</button>
+    </form>
+
+    <!-- Error message display -->
+    <div id="error-message" class="error"></div>
+
+    <!-- Conversion result -->
+    <div id="conversion-result">
+      <h3>Converted Text:</h3>
+      <textarea id="text-content" readonly></textarea>
+    </div>
+  </div>
+
+  <script>
+    // Handle file form submission
+    document.getElementById("file-form").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const formData = new FormData();
+      const fileInput = document.getElementById("file");
+
+      if (fileInput.files.length === 0) {
+        showError("Please select a file to upload.");
+        return;
+      }
+
+      formData.append("file", fileInput.files[0]);
+
+      fetch('https://markalldown.onrender.com/convert', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.text_content) {
+          displayResult(data.text_content);
+        } else {
+          showError(data.error || "Something went wrong. Please try again.");
+        }
+      })
+      .catch(error => {
+        showError("Error: " + error.message);
+      });
+    });
+
+    // Handle URL form submission
+    document.getElementById("url-form").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const urlInput = document.getElementById("url").value;
+
+      if (!urlInput) {
+        showError("Please enter a valid URL.");
+        return;
+      }
+
+      fetch('/convert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url: urlInput })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.text_content) {
+          displayResult(data.text_content);
+        } else {
+          showError(data.error || "Something went wrong. Please try again.");
+        }
+      })
+      .catch(error => {
+        showError("Error: " + error.message);
+      });
+    });
+
+    // Display error message
+    function showError(message) {
+      document.getElementById("error-message").textContent = message;
+    }
+
+    // Display the conversion result
+    function displayResult(textContent) {
+      document.getElementById("conversion-result").style.display = "block";
+      document.getElementById("text-content").value = textContent;
+      document.getElementById("error-message").textContent = "";  // Clear any previous errors
+    }
+  </script>
+</body>
+
+</html>
