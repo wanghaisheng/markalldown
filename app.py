@@ -1,60 +1,75 @@
+from flask import Flask, request, jsonify, render_template
 import os
-import mimetypes
-import requests
-from flask import Flask, request, jsonify
-from markitdown import MarkItDown
-from openai import OpenAI
+import urllib.request
+from io import BytesIO
+from pdfminer.high_level import extract_text
+from docx import Document
+from pptx import Presentation
+import zipfile
+import io
 
 app = Flask(__name__)
 
-# Set up the path for supported files if necessary
-SUPPORTED_FILE_EXTENSIONS = ['.pdf', '.docx', '.pptx', '.xlsx', '.html', '.txt', '.jpg', '.jpeg', '.png']
+# Function to extract text from various file formats
+def extract_text_from_file(file_path, file_extension):
+    text = ""
+    if file_extension == '.pdf':
+        text = extract_text(file_path)  # PDF file
+    elif file_extension == '.docx':
+        doc = Document(file_path)
+        text = "\n".join([para.text for para in doc.paragraphs])  # DOCX file
+    elif file_extension == '.pptx':
+        presentation = Presentation(file_path)
+        text = "\n".join([slide.shapes[0].text for slide in presentation.slides if slide.shapes])
+    elif file_extension == '.txt':
+        with open(file_path, 'r') as file:
+            text = file.read()
+    elif file_extension in ['.jpg', '.jpeg', '.png']:
+        from PIL import Image
+        import pytesseract
+        img = Image.open(file_path)
+        text = pytesseract.image_to_string(img)
+    return text
 
+# Route to serve the index.html
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# Route to handle file upload for conversion
 @app.route('/convert', methods=['POST'])
 def convert():
-    # Check if the file is provided via upload
-    file = request.files.get('file')
-    
-    # Check if a URL is provided
-    url = request.json.get('url')
+    data = request.get_json()
 
-    if file:
-        # Handle file upload
-        file_extension = os.path.splitext(file.filename)[1].lower()
-        if file_extension not in SUPPORTED_FILE_EXTENSIONS:
-            return jsonify({"error": "Unsupported file format"}), 400
-        
-        # Process file directly using MarkItDown
-        client = OpenAI()  # Initialize the OpenAI client (e.g., GPT-4)
-        md = MarkItDown(mlm_client=client, mlm_model="gpt-4")
-        result = md.convert(file)
-
-        return jsonify({"text_content": result.text_content})
-
-    elif url:
-        # Handle URL input
+    if 'url' in data:
+        url = data['url']
         try:
-            response = requests.get(url)
-            response.raise_for_status()
+            # Handle URL download
+            response = urllib.request.urlopen(url)
+            file_data = response.read()
+            file_name = url.split("/")[-1]
+            file_extension = os.path.splitext(file_name)[1].lower()
 
-            # Detect MIME type
-            mime_type, encoding = mimetypes.guess_type(url)
-            if mime_type is None:
-                return jsonify({"error": "Unable to detect MIME type for the URL content"}), 400
-
-            # Process URL content using MarkItDown
-            client = OpenAI()  # Initialize the OpenAI client (e.g., GPT-4)
-            md = MarkItDown(mlm_client=client, mlm_model="gpt-4")
-            result = md.convert_stream(response.content, mime_type=mime_type, url=url)
-
-            return jsonify({"text_content": result.text_content})
-
-        except requests.exceptions.RequestException as e:
-            return jsonify({"error": f"Error fetching the URL: {str(e)}"}), 400
-
+            # Create a temporary file from URL data
+            temp_file = BytesIO(file_data)
+            text_content = extract_text_from_file(temp_file, file_extension)
+            return jsonify({'text_content': text_content})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 400
     else:
-        return jsonify({"error": "No file or URL provided"}), 400
+        # Handle file upload
+        file = request.files['file']
+        if file:
+            file_name = file.filename
+            file_extension = os.path.splitext(file_name)[1].lower()
 
+            # Save file temporarily and process it
+            temp_file = BytesIO(file.read())
+            text_content = extract_text_from_file(temp_file, file_extension)
+
+            return jsonify({'text_content': text_content})
+        else:
+            return jsonify({'error': 'No file uploaded'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
