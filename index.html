@@ -4,36 +4,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- SEO Meta Tags -->
-  <meta name="description" content="A mobile simulator designed to demonstrate mobile interface design.">
-  <meta name="keywords" content="mobile, simulator, mobile design, mobile app">
+  <meta name="description" content="A tool for converting various file formats into Markdown.">
+  <meta name="keywords" content="convert, markdown, file to markdown, pdf to markdown, docx to markdown">
   <meta name="author" content="Your Name or Company">
   <meta http-equiv="Content-Language" content="en">
 
   <!-- Canonical Link -->
-  <link rel="canonical" href="https://www.yourwebsite.com/pc-simulator" />
+  <link rel="canonical" href="https://www.yourwebsite.com/convert-to-markdown" />
 
   <!-- Open Graph for Social Media -->
-  <meta property="og:title" content="PC Simulator">
-  <meta property="og:description" content="A mobile simulator designed to demonstrate mobile interface design.">
-  <meta property="og:image" content="https://www.yourwebsite.com/pc-simulator-image.jpg">
-  <meta property="og:url" content="https://www.yourwebsite.com/pc-simulator">
+  <meta property="og:title" content="Convert to Markdown Tool">
+  <meta property="og:description" content="Convert various file formats to Markdown with ease.">
+  <meta property="og:image" content="https://www.yourwebsite.com/convert-to-markdown-image.jpg">
+  <meta property="og:url" content="https://www.yourwebsite.com/convert-to-markdown">
   <meta property="og:type" content="website">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="PC Simulator">
-  <meta name="twitter:description" content="A mobile simulator designed to demonstrate mobile interface design.">
-  <meta name="twitter:image" content="https://www.yourwebsite.com/pc-simulator-image.jpg">
+  <meta name="twitter:title" content="Convert to Markdown Tool">
+  <meta name="twitter:description" content="Convert various file formats to Markdown with ease.">
+  <meta name="twitter:image" content="https://www.yourwebsite.com/convert-to-markdown-image.jpg">
   <meta name="twitter:creator" content="@yourtwitterhandle">
 
   <!-- Favicon -->
   <link rel="icon" href="https://www.yourwebsite.com/favicon.ico" type="image/x-icon">
 
-  <title>PC Simulator</title>
+  <title>Convert to Markdown</title>
 
   <style>
-    /* Global Styles */
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -53,19 +51,18 @@
       background-color: #fff;
       position: relative;
       display: flex;
-      justify-content: center;
-      align-items: center;
+      flex-direction: column;
+      padding: 20px;
     }
 
     .content {
-      font-size: 1.2rem;
+      font-size: 1rem;
       color: #333;
+      margin-bottom: 20px;
     }
 
-    /* Form Styles */
     form {
-      margin-top: 20px;
-      text-align: left;
+      margin-top: 10px;
       padding: 10px;
       background-color: #fff;
       border-radius: 8px;
@@ -91,7 +88,6 @@
       background-color: #45a049;
     }
 
-    /* Result Styles */
     #conversion-result {
       margin-top: 20px;
       background-color: #f4f4f4;
@@ -112,39 +108,25 @@
       color: red;
       margin-top: 10px;
     }
-
-    /* Adjustments for PC */
-    @media (min-width: 768px) {
-      .mobile-container {
-        width: 600px;
-        height: 1000px;
-      }
-
-      .content {
-        font-size: 1.5rem;
-      }
-    }
   </style>
 </head>
 
 <body>
   <div class="mobile-container">
     <div class="content">
-      <p>Mobile Simulator Screen</p>
-      <p>PC Version: Adjusted for larger screens.</p>
+      <h2>Convert Your Files to Markdown</h2>
+      <p>Upload a file or provide a URL, and we will convert it into Markdown format for you!</p>
     </div>
-  </div>
 
-  <div class="content">
     <!-- File Upload Form -->
-    <h2>Upload a File</h2>
+    <h3>Upload a File</h3>
     <form id="file-form" enctype="multipart/form-data">
       <input type="file" id="file" name="file" accept=".pdf, .docx, .pptx, .xlsx, .html, .txt, .jpg, .jpeg, .png" />
       <button type="submit">Convert File</button>
     </form>
 
     <!-- URL Input Form -->
-    <h2>Or Provide a URL</h2>
+    <h3>Or Provide a URL</h3>
     <form id="url-form">
       <input type="text" id="url" name="url" placeholder="Enter URL of the file" />
       <button type="submit">Convert from URL</button>
@@ -155,7 +137,7 @@
 
     <!-- Conversion result -->
     <div id="conversion-result">
-      <h3>Converted Text:</h3>
+      <h3>Converted Markdown:</h3>
       <textarea id="text-content" readonly></textarea>
     </div>
   </div>
