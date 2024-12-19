@@ -1,220 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="A tool for converting various file formats into Markdown.">
-  <meta name="keywords" content="convert, markdown, file to markdown, pdf to markdown, docx to markdown">
-  <meta name="author" content="Your Name or Company">
-  <meta http-equiv="Content-Language" content="en">
-
-  <!-- Canonical Link -->
-  <link rel="canonical" href="https://www.yourwebsite.com/convert-to-markdown" />
-
-  <!-- Open Graph for Social Media -->
-  <meta property="og:title" content="Convert to Markdown Tool">
-  <meta property="og:description" content="Convert various file formats to Markdown with ease.">
-  <meta property="og:image" content="https://www.yourwebsite.com/convert-to-markdown-image.jpg">
-  <meta property="og:url" content="https://www.yourwebsite.com/convert-to-markdown">
-  <meta property="og:type" content="website">
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Convert to Markdown Tool">
-  <meta name="twitter:description" content="Convert various file formats to Markdown with ease.">
-  <meta name="twitter:image" content="https://www.yourwebsite.com/convert-to-markdown-image.jpg">
-  <meta name="twitter:creator" content="@yourtwitterhandle">
-
-  <!-- Favicon -->
-  <link rel="icon" href="https://www.yourwebsite.com/favicon.ico" type="image/x-icon">
-
-  <title>Convert to Markdown</title>
-
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-    }
-
-    .mobile-container {
-      width: 360px;
-      height: 640px;
-      border: 16px solid black;
-      border-radius: 16px;
-      background-color: #fff;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-    }
-
-    .content {
-      font-size: 1rem;
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    form {
-      margin-top: 10px;
-      padding: 10px;
-      background-color: #fff;
-      border-radius: 8px;
-      width: 100%;
-    }
-
-    input[type="file"], input[type="text"], button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      font-size: 16px;
-      border-radius: 5px;
-    }
-
-    button {
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
-      border: none;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
-
-    #conversion-result {
-      margin-top: 20px;
-      background-color: #f4f4f4;
-      padding: 15px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      display: none;
-    }
-
-    #text-content {
-      width: 100%;
-      height: 300px;
-      font-size: 1rem;
-      padding: 10px;
-    }
-
-    .error {
-      color: red;
-      margin-top: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Processing</title>
+    <style>
+        .status-container {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: none;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
 </head>
-
 <body>
-  <div class="mobile-container">
-    <div class="content">
-      <h2>Convert Your Files to Markdown</h2>
-      <p>Upload a file or provide a URL, and we will convert it into Markdown format for you!</p>
-    </div>
-
-    <!-- File Upload Form -->
-    <h3>Upload a File</h3>
-    <form id="file-form" enctype="multipart/form-data">
-      <input type="file" id="file" name="file" accept=".pdf, .docx, .pptx, .xlsx, .html, .txt, .jpg, .jpeg, .png" />
-      <button type="submit">Convert File</button>
+    <h1>File Processing</h1>
+    
+    <form id="uploadForm">
+        <input type="text" id="fileUrl" placeholder="Enter file URL" required>
+        <textarea id="variables" placeholder="Additional variables (JSON format)"></textarea>
+        <button type="submit">Process File</button>
     </form>
 
-    <!-- URL Input Form -->
-    <h3>Or Provide a URL</h3>
-    <form id="url-form">
-      <input type="text" id="url" name="url" placeholder="Enter URL of the file" />
-      <button type="submit">Convert from URL</button>
-    </form>
-
-    <!-- Error message display -->
-    <div id="error-message" class="error"></div>
-
-    <!-- Conversion result -->
-    <div id="conversion-result">
-      <h3>Converted Markdown:</h3>
-      <textarea id="text-content" readonly></textarea>
+    <div id="statusContainer" class="status-container">
+        <h3>Processing Status</h3>
+        <p id="statusMessage"></p>
+        <div id="resultContainer" style="display: none">
+            <h4>Results:</h4>
+            <p>View result: <a id="resultLink" target="_blank">Open in GitHub</a></p>
+            <button id="downloadButton">Download Result</button>
+        </div>
     </div>
-  </div>
 
-  <script>
-    // Handle file form submission
-    document.getElementById("file-form").addEventListener("submit", function(event) {
-      event.preventDefault();
-      const formData = new FormData();
-      const fileInput = document.getElementById("file");
+    <script>
+        const WORKER_URL = 'https://your-worker.workers.dev';
+        let currentBranch = null;
+        let statusCheckInterval = null;
 
-      if (fileInput.files.length === 0) {
-        showError("Please select a file to upload.");
-        return;
-      }
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileUrl = document.getElementById('fileUrl').value;
+            let variables = {};
+            
+            try {
+                const variablesText = document.getElementById('variables').value;
+                if (variablesText) {
+                    variables = JSON.parse(variablesText);
+                }
+            } catch (error) {
+                alert('Invalid JSON in variables field');
+                return;
+            }
 
-      formData.append("file", fileInput.files[0]);
+            try {
+                const response = await fetch(`${WORKER_URL}/trigger`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fileUrl,
+                        variables
+                    })
+                });
 
-      fetch('https://markalldown.onrender.com/convert', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.text_content) {
-          displayResult(data.text_content);
-        } else {
-          showError(data.error || "Something went wrong. Please try again.");
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    currentBranch = data.branch_name;
+                    showStatus('Processing started...', 'processing');
+                    startStatusCheck();
+                } else {
+                    showStatus(data.message, 'error');
+                }
+            } catch (error) {
+                showStatus('Error starting process: ' + error.message, 'error');
+            }
+        });
+
+        function startStatusCheck() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+
+            statusCheckInterval = setInterval(checkStatus, 5000); // Check every 5 seconds
         }
-      })
-      .catch(error => {
-        showError("Error: " + error.message);
-      });
-    });
 
-    // Handle URL form submission
-    document.getElementById("url-form").addEventListener("submit", function(event) {
-      event.preventDefault();
-      const urlInput = document.getElementById("url").value;
+        async function checkStatus() {
+            if (!currentBranch) return;
 
-      if (!urlInput) {
-        showError("Please enter a valid URL.");
-        return;
-      }
+            try {
+                const response = await fetch(`${WORKER_URL}/status?branch=${currentBranch}`);
+                const data = await response.json();
 
-      fetch('/convert', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ url: urlInput })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.text_content) {
-          displayResult(data.text_content);
-        } else {
-          showError(data.error || "Something went wrong. Please try again.");
+                switch (data.status) {
+                    case 'completed':
+                        clearInterval(statusCheckInterval);
+                        showStatus('Processing completed!', 'success');
+                        showResult(data.result_file_url, data.raw_url);
+                        break;
+                    case 'error':
+                        clearInterval(statusCheckInterval);
+                        showStatus('Error: ' + data.message, 'error');
+                        break;
+                    case 'processing':
+                    case 'pending':
+                        showStatus(data.message, 'processing');
+                        break;
+                }
+            } catch (error) {
+                showStatus('Error checking status: ' + error.message, 'error');
+            }
         }
-      })
-      .catch(error => {
-        showError("Error: " + error.message);
-      });
-    });
 
-    // Display error message
-    function showError(message) {
-      document.getElementById("error-message").textContent = message;
-    }
+        function showStatus(message, type) {
+            const container = document.getElementById('statusContainer');
+            const messageElement = document.getElementById('statusMessage');
+            
+            container.style.display = 'block';
+            messageElement.textContent = message;
+            messageElement.className = type;
+        }
 
-    // Display the conversion result
-    function displayResult(textContent) {
-      document.getElementById("conversion-result").style.display = "block";
-      document.getElementById("text-content").value = textContent;
-      document.getElementById("error-message").textContent = "";  // Clear any previous errors
-    }
-  </script>
+        function showResult(githubUrl, rawUrl) {
+            const resultContainer = document.getElementById('resultContainer');
+            const resultLink = document.getElementById('resultLink');
+            const downloadButton = document.getElementById('downloadButton');
+
+            resultContainer.style.display = 'block';
+            resultLink.href = githubUrl;
+            
+            downloadButton.onclick = async () => {
+                try {
+                    const response = await fetch(rawUrl);
+                    const text = await response.text();
+                    
+                    const blob = new Blob([text], { type: 'text/plain' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'result.txt';
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } catch (error) {
+                    alert('Error downloading result: ' + error.message);
+                }
+            };
+        }
+    </script>
 </body>
-
 </html>
